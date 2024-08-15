@@ -34,7 +34,16 @@ async def default_handler(context: PlaywrightCrawlingContext) -> None:
                 if (url := await link.get_attribute('href'))
             ]
         )
-    await context.page.locator('xpath=//button[(@class="secondary jum-button pagination-button") and @data-label="Volgende"]').click()
+        await context.page.locator('xpath=//button[(@class="secondary jum-button pagination-button") and @data-label="Volgende"]').click()
+        await context.page.wait_for_load_state('networkidle')
+        all_links = await context.page.locator(".title-link").all()
+        await context.add_requests(
+            [
+                Request.from_url(f"https://www.jumbo.com{url}", label='product')
+                for link in all_links
+                if (url := await link.get_attribute('href'))
+            ]
+        )
     
 
 @router.handler("product")
