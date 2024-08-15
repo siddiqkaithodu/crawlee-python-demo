@@ -17,7 +17,7 @@ async def main() -> None:
     """The crawler entry point."""
     crawler = PlaywrightCrawler(
         request_handler=router,
-        max_requests_per_crawl=5,
+        # max_requests_per_crawl=5,
         # proxy_configuration=proxies
         headless=False
     )

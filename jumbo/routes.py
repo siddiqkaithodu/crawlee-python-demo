@@ -1,6 +1,7 @@
 from crawlee.basic_crawler import Router
 from crawlee.playwright_crawler import PlaywrightCrawlingContext
 from crawlee import Glob
+from crawlee.models import Request
 from playwright.async_api import Page, TimeoutError as PlaywrightTimeoutError
 import asyncio
 from contextlib import asynccontextmanager,suppress
@@ -24,12 +25,16 @@ async def accept_cookies(page: Page):
 async def default_handler(context: PlaywrightCrawlingContext) -> None:
     """Default request handler."""
     async with accept_cookies(context.page):
-        # await asyncio.sleep(10)
-        # await context.enqueue_links()
-        await context.enqueue_links(
-        include=[Glob('https://www.jumbo.com/producten/**')],
-        label="product"
-    )
+        all_links = await context.page.locator(".title-link").all()
+        #  //*[@class="title-link"]
+        await context.add_requests(
+            [
+                Request.from_url(f"https://www.jumbo.com{url}", label='product')
+                for link in all_links
+                if (url := await link.get_attribute('href'))
+            ]
+        )
+    await context.page.locator('xpath=//button[(@class="secondary jum-button pagination-button") and @data-label="Volgende"]').click()
     
 
 @router.handler("product")
@@ -40,7 +45,7 @@ async def product(context: PlaywrightCrawlingContext) -> None:
         data = {
             'url': context.request.url,
             # 'title': context.soup.title.string,
-            'html': await context.page.content()
+            # 'html': await context.page.content()
         }
 
         # Push the extracted data to the default dataset.
